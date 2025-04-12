@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flip Growth Comparison</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px;
+    }
+    .result {
+      background: #fff;
+      padding: 10px;
+      border-left: 4px solid #4CAF50;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+    canvas {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Flip Growth Comparison</h2>
+
+  <label>Start Amount A ($)</label>
+  <input type="number" id="startAmountA" value="200">
+
+  <label>Start Amount B ($)</label>
+  <input type="number" id="startAmountB" value="500">
+
+  <label>Goal Amount ($)</label>
+  <input type="number" id="goalAmount" value="5000">
+
+  <label>Win Multiplier (e.g., 2 for +100%)</label>
+  <input type="number" step="0.01" id="winMultiplier" value="2">
+
+  <label>Loss Multiplier (e.g., 0.7 for -30%)</label>
+  <input type="number" step="0.01" id="lossMultiplier" value="0.7">
+
+  <label>Wins Per Cycle</label>
+  <input type="number" id="winsPerCycle" value="3">
+
+  <label>Losses Per Cycle</label>
+  <input type="number" id="lossesPerCycle" value="1">
+
+  <button onclick="compare()">Compare</button>
+  <button onclick="showProgression()">Show Value Progression</button>
+  <canvas id="progressChart" width="400" height="200"></canvas>
+  
+  <div class="result" id="result"></div>
+
+  <canvas id="flipChart" width="400" height="200"></canvas>
+
+  <script>
+    let chart;
+
+    function calculateFlips(start, goal, winMult, lossMult, wins, losses) {
+      const cycleMult = Math.pow(winMult, wins) * Math.pow(lossMult, losses);
+      const requiredGrowth = goal / start;
+
+      if (cycleMult <= 1) return NaN;
+
+      const cycles = Math.log(requiredGrowth) / Math.log(cycleMult);
+      return Math.ceil(cycles * (wins + losses));
+    }
+
+    function compare() {
+      const startA = parseFloat(document.getElementById("startAmountA").value);
+      const startB = parseFloat(document.getElementById("startAmountB").value);
+      const goal = parseFloat(document.getElementById("goalAmount").value);
+      const winMult = parseFloat(document.getElementById("winMultiplier").value);
+      const lossMult = parseFloat(document.getElementById("lossMultiplier").value);
+      const wins = parseInt(document.getElementById("winsPerCycle").value);
+      const losses = parseInt(document.getElementById("lossesPerCycle").value);
+
+      const flipsA = calculateFlips(startA, goal, winMult, lossMult, wins, losses);
+      const flipsB = calculateFlips(startB, goal, winMult, lossMult, wins, losses);
+
+      const resultText = 
+        `Start A ($${startA}) requires ~${flipsA} flips\n` +
+        `Start B ($${startB}) requires ~${flipsB} flips`;
+
+      document.getElementById("result").innerText = resultText;
+
+      const ctx = document.getElementById('flipChart').getContext('2d');
+
+      if (chart) chart.destroy();  // Reset chart on each run
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Start A', 'Start B'],
+          datasets: [{
+            label: 'Flips Needed',
+            data: [flipsA, flipsB],
+            backgroundColor: ['#4CAF50', '#2196F3']
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Flips'
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+
+<button id="downloadBtn">Download Chart</button>
